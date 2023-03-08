@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class TileBoard : MonoBehaviour
@@ -28,13 +29,13 @@ public class TileBoard : MonoBehaviour
 
     private void CreateTile(){
         Tile tile = Instantiate(tilePrefab, grid.transform);
-        tile.SetState(tileStates[Random.Range(0,11)],2);
+        tile.SetState(tileStates[UnityEngine.Random.Range(0,11)],2);
         tile.Spawn(grid.getRandomEmptyCell());
         tiles.Add(tile);
     }
     private void CreateTile(int stateID){
         Tile tile = Instantiate(tilePrefab, grid.transform);
-        int number = 2^^stateID;
+        int number = (int)Math.Pow(2,stateID+1);
         if(stateID > 11){stateID = 11;}
         tile.SetState(tileStates[stateID],number);
         tile.Spawn(grid.getRandomEmptyCell());
