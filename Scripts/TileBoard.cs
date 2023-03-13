@@ -30,7 +30,7 @@ public class TileBoard : MonoBehaviour
     private void CreateTile(){
         Tile tile = Instantiate(tilePrefab, grid.transform);
         tile.SetState(tileStates[UnityEngine.Random.Range(0,11)],2);
-        tile.Spawn(grid.getRandomEmptyCell());
+        tile.Spawn(grid.GetRandomEmptyCell());
         tiles.Add(tile);
     }
     private void CreateTile(int stateID){
@@ -38,7 +38,69 @@ public class TileBoard : MonoBehaviour
         int number = (int)Math.Pow(2,stateID+1);
         if(stateID > 11){stateID = 11;}
         tile.SetState(tileStates[stateID],number);
-        tile.Spawn(grid.getRandomEmptyCell());
+        tile.Spawn(grid.GetRandomEmptyCell());
         tiles.Add(tile);
     }
+
+    private void Update(){
+
+        if(Input.GetKeyDown(KeyCode.W)||Input.GetKeyDown(KeyCode.UpArrow)){
+            MoveTiles(Vector2Int.up, 0,1,1,1);
+        }
+        else if(Input.GetKeyDown(KeyCode.S)||Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            MoveTiles(Vector2Int.down, 0,1,grid.height-2,-1);
+        }
+        else if(Input.GetKeyDown(KeyCode.A)||Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            MoveTiles(Vector2Int.left, 0,1,1,1);
+        }
+        else if(Input.GetKeyDown(KeyCode.D)||Input.GetKeyDown(KeyCode.RightArrow))
+        {
+             MoveTiles(Vector2Int.right, grid.width-2,-1,1,1);
+        }
+
+
+    }
+
+    private void MoveTiles(Vector2Int direction, int startX, int incrementX, int startY, int incrementY){
+        
+        for(int x = startX; x >=0 && x < grid.width; x+=incrementX){
+            for(int y = startY; y >=0 && y < grid.height; y+=incrementY){
+                TileCell cell = grid.GetCell(x,y);
+                
+                if(cell.occupied){
+                    MoveTile(cell.tile,direction);
+                }
+            }   
+        }
+
+
+    }
+
+    private void MoveTile(Tile tile, Vector2Int direction){
+        TileCell newCell = null;
+        TileCell adjacent = grid.GetAdjacentCell(tile.cell, direction);
+                            
+        while(adjacent != null){
+
+            if(adjacent.occupied){
+
+                //TODO Merge if possible
+
+                break;
+            }
+            newCell = adjacent;
+            adjacent = grid.GetAdjacentCell(adjacent,direction);
+
+        }
+
+        if(newCell!= null){
+            tile.MoveTo(newCell);
+        }
+                
+    }
+
+
+
 }

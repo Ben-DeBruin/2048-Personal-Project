@@ -23,7 +23,29 @@ public class TileGrid : MonoBehaviour
         }
     }
 
-    public TileCell getRandomEmptyCell(){
+    public TileCell GetCell(int x, int y){
+
+        if(x<0 || x >= width || y<0 || y>=height){
+            return null;
+        }
+        return rows[y].cells[x];
+
+    }
+    public TileCell GetCell(Vector2Int coordinates){//Overload to allow alternate arguments
+
+        return GetCell(coordinates.x,coordinates.y);
+
+    }
+
+    public TileCell GetAdjacentCell(TileCell cell, Vector2Int direction){       
+        Vector2Int coordinates = cell.coordinates;
+        coordinates.x += direction.x;
+        coordinates.y -= direction.y; //Minus because Up is positive, but grid is indexed from top down
+        
+        return GetCell(coordinates);
+    }
+
+    public TileCell GetRandomEmptyCell(){
         int index=Random.Range(0,cells.Length);
         int remember = index;
         while(cells[index].occupied){

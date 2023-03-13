@@ -38,4 +38,12 @@ public class Tile : MonoBehaviour
         this.cell.tile = this;
         transform.position = cell.transform.position;
     }
+
+    public void MoveTo(TileCell cell){
+        
+        this.cell.tile = null;
+        this.cell = cell;
+        this.cell.tile = this;
+        transform.position = cell.transform.position;
+    }
 }
