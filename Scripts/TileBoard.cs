@@ -95,9 +95,36 @@ public class TileBoard : MonoBehaviour
 
                 if(CanMerge(tile, adjacent.tile)){
                     MergeTiles(tile,adjacent.tile);
+                    return true;
+                }
+                break;
+                
+            }
+            newCell = adjacent;
+            adjacent = grid.GetAdjacentCell(adjacent,direction);
+
+        }
+
+        if(newCell!= null){
+            tile.MoveTo(newCell);
+            return true;
+        }
+        return false;  
+    }
+    private bool SmashTile(Tile tile, Vector2Int direction){//Smashing a Tile means it will sweep cascading merges as it goes. IE: a row containing (2,1,1,0) pushed right, will merge to (0,0,0,4) instead of (0,0,2,2)
+        TileCell newCell = null;
+        TileCell adjacent = grid.GetAdjacentCell(tile.cell, direction);
+                            
+        while(adjacent != null){
+
+            if(adjacent.occupied){
+
+                if(CanSmash(tile, adjacent.tile)){
+                    MergeTiles(tile,adjacent.tile);
+                    return true;
                 }
 
-                break;
+                
             }
             newCell = adjacent;
             adjacent = grid.GetAdjacentCell(adjacent,direction);
@@ -112,6 +139,9 @@ public class TileBoard : MonoBehaviour
     }
 
     private bool CanMerge(Tile A, Tile B){
+        return A.number == B.number && !B.locked;
+    }
+    private bool CanSmash(Tile A, Tile B){
         return A.number == B.number;
     }
     private void MergeTiles(Tile A, Tile B){ //Move Tile A into Tile B. Destroy Tile A and Promote Tile B
@@ -119,6 +149,7 @@ public class TileBoard : MonoBehaviour
         tiles.Remove(A);
         A.MergeTo(B.cell);
         PromoteTile(B);
+        B.locked = true;
     }
 
     private void PromoteTile(Tile tile){
@@ -136,6 +167,9 @@ public class TileBoard : MonoBehaviour
 
         if(tiles.Count <= grid.size){
             CreateTile();
+        }
+        foreach(var tile in tiles){
+            tile.locked = false;    //Unlock all tiles that merged in the previous move.
         }
         
         //TODO: create new Tiles and check board state
