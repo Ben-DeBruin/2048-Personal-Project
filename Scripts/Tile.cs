@@ -11,13 +11,14 @@ public class Tile : MonoBehaviour
     public TileCell cell {get; private set;}
     public bool locked{get; set;}
     public int number{get; private set;}
-
+    public Vector3 canonicalSize;
     private Image background;
     private TextMeshProUGUI text;
 
     private void Awake(){
         background = GetComponent<Image>();
         text = GetComponentInChildren<TextMeshProUGUI>();
+        canonicalSize = transform.localScale;
     }
 
     public void SetState(TileState state, int number){
@@ -38,6 +39,8 @@ public class Tile : MonoBehaviour
         this.cell = cell;
         this.cell.tile = this;
         transform.position = cell.transform.position;
+        canonicalSize = transform.localScale;
+        StartCoroutine(Scale(0f,1f));
     }
 
     public void MoveTo(TileCell cell){ //Move to destination
@@ -56,6 +59,7 @@ public class Tile : MonoBehaviour
         this.cell.tile = null;
         
         StartCoroutine(Animate(cell.transform.position,true));
+        StartCoroutine(Scale(1,0));
 
     }
 
@@ -74,5 +78,22 @@ public class Tile : MonoBehaviour
         transform.position = to;
 
         if(merging){Destroy(gameObject);}
+    }
+
+    private IEnumerator Scale(float from, float to){
+        float elapsed = 0f;
+        float duration = 0.15f;
+
+        Vector3 start = new Vector3(canonicalSize.x * from, canonicalSize.y * from, canonicalSize.z *from);
+        Vector3 finish = new Vector3(canonicalSize.x * to, canonicalSize.y * to, canonicalSize.z * to);
+        
+
+        while(elapsed < duration){
+            transform.localScale = Vector3.Lerp(start,finish,elapsed/duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        transform.localScale = finish;
+         
     }
 }

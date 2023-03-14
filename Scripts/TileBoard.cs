@@ -9,6 +9,8 @@ public class TileBoard : MonoBehaviour
     private TileGrid grid;
     private List<Tile> tiles;
     private bool waiting;
+    public int maxNumber;
+    public int mergeCount;
     public Tile tilePrefab;
     public TileState[] tileStates;
 
@@ -25,7 +27,13 @@ public class TileBoard : MonoBehaviour
     public void CreateTile()
     {
         Tile tile = Instantiate(tilePrefab, grid.transform);
-        tile.SetState(tileStates[0], 1);
+        int number = 1;
+        //Generate A random tile type.
+        while(UnityEngine.Random.Range(1,6) ==1 && number < maxNumber-1){ //1/6th chance of elevating a tile spawn to a higher rank. Reducing odds each time
+            number++;
+        }
+
+        tile.SetState(tileStates[number-1], number);
         tile.Spawn(grid.GetRandomEmptyCell());
         tiles.Add(tile);
     }
@@ -166,6 +174,10 @@ public class TileBoard : MonoBehaviour
         A.MergeTo(B.cell);
         PromoteTile(B);
         B.locked = true;
+        if(B.number > maxNumber){
+            maxNumber = B.number;
+        }
+        mergeCount++;
     }
 
     public void ClearBoard()
@@ -186,7 +198,7 @@ public class TileBoard : MonoBehaviour
         {
             tile.SetState(tileStates[11], tile.number + 1);
         }
-        tile.SetState(tileStates[tile.number + 1], tile.number + 1);
+        tile.SetState(tileStates[tile.number], tile.number + 1);
     }
     private IEnumerator WaitForChanges()
     {
@@ -205,10 +217,13 @@ public class TileBoard : MonoBehaviour
             tile.locked = false;    //Unlock all tiles that merged in the previous move.
         }
 
+
         if (CheckForGameOver())
         {
             gameManager.GameOver();
         }
+
+        gameManager.SetScore(getCurrentScore());
 
 
     }
@@ -231,6 +246,16 @@ public class TileBoard : MonoBehaviour
         }
 
         return true; //Exhausted all moves for all cells.
+    }
+    public int getCurrentScore(){
+        int sum = 0;
+        foreach (var tile in tiles)
+        {
+            sum += (int)Math.Pow(2,tile.number-1);
+        }
+        sum += mergeCount*maxNumber;   
+        return sum;
+
     }
 
 }
