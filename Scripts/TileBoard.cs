@@ -5,175 +5,232 @@ using UnityEngine;
 
 public class TileBoard : MonoBehaviour
 {
+    public GameManager gameManager;
     private TileGrid grid;
     private List<Tile> tiles;
     private bool waiting;
     public Tile tilePrefab;
     public TileState[] tileStates;
-    private void Awake(){
+
+    private void Awake()
+    {
         grid = GetComponentInChildren<TileGrid>();
         tiles = new List<Tile>();
 
     }
 
-    private void Start(){
-        
-        CreateTile(1);
-        CreateTile(1);
-        CreateTile(1);
-        CreateTile(1);
-        CreateTile(1);
-        CreateTile(1);
-        CreateTile(1);
-        CreateTile(1);
-    
-    }
 
-    private void CreateTile(){
+
+
+    public void CreateTile()
+    {
         Tile tile = Instantiate(tilePrefab, grid.transform);
-        tile.SetState(tileStates[0],1);
+        tile.SetState(tileStates[0], 1);
         tile.Spawn(grid.GetRandomEmptyCell());
         tiles.Add(tile);
     }
-    private void CreateTile(int number){
+    public void CreateTile(int number)
+    {
         Tile tile = Instantiate(tilePrefab, grid.transform);
-        int stateID = number-1;//(int)Math.Pow(2,stateID+1);
-        if(stateID > 11){stateID = 11;}
-        tile.SetState(tileStates[stateID],number);
+        int stateID = number - 1;//(int)Math.Pow(2,stateID+1);
+        if (stateID > 11) { stateID = 11; }
+        tile.SetState(tileStates[stateID], number);
         tile.Spawn(grid.GetRandomEmptyCell());
         tiles.Add(tile);
     }
 
-    private void Update(){
-        
-        if(!waiting){
-            if(Input.GetKeyDown(KeyCode.W)||Input.GetKeyDown(KeyCode.UpArrow)){
-                MoveTiles(Vector2Int.up, 0,1,1,1);
-            }
-            else if(Input.GetKeyDown(KeyCode.S)||Input.GetKeyDown(KeyCode.DownArrow))
+    private void Update()
+    {
+
+        if (!waiting)
+        {
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
             {
-                MoveTiles(Vector2Int.down, 0,1,grid.height-2,-1);
+                MoveTiles(Vector2Int.up, 0, 1, 1, 1);
             }
-            else if(Input.GetKeyDown(KeyCode.A)||Input.GetKeyDown(KeyCode.LeftArrow))
+            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
             {
-                MoveTiles(Vector2Int.left, 0,1,0,1);
+                MoveTiles(Vector2Int.down, 0, 1, grid.height - 2, -1);
             }
-            else if(Input.GetKeyDown(KeyCode.D)||Input.GetKeyDown(KeyCode.RightArrow))
+            else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
-                MoveTiles(Vector2Int.right, grid.width-2,-1,0,1);
+                MoveTiles(Vector2Int.left, 0, 1, 0, 1);
+            }
+            else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                MoveTiles(Vector2Int.right, grid.width - 2, -1, 0, 1);
             }
         }
-        
+
 
 
     }
 
-    private void MoveTiles(Vector2Int direction, int startX, int incrementX, int startY, int incrementY){
+    private void MoveTiles(Vector2Int direction, int startX, int incrementX, int startY, int incrementY)
+    {
         bool stateChanged = false;
-        for(int x = startX; x >=0 && x < grid.width; x+=incrementX){
-            for(int y = startY; y >=0 && y < grid.height; y+=incrementY){
-                TileCell cell = grid.GetCell(x,y);
-                
-                if(cell.occupied){
-                    stateChanged |= MoveTile(cell.tile,direction);
+        for (int x = startX; x >= 0 && x < grid.width; x += incrementX)
+        {
+            for (int y = startY; y >= 0 && y < grid.height; y += incrementY)
+            {
+                TileCell cell = grid.GetCell(x, y);
+
+                if (cell.occupied)
+                {
+                    stateChanged |= MoveTile(cell.tile, direction);
                 }
-            }   
+            }
         }
 
-        if(stateChanged){
+        if (stateChanged)
+        {
             StartCoroutine(WaitForChanges());
         }
     }
 
-    private bool MoveTile(Tile tile, Vector2Int direction){
+    private bool MoveTile(Tile tile, Vector2Int direction)
+    {
         TileCell newCell = null;
         TileCell adjacent = grid.GetAdjacentCell(tile.cell, direction);
-                            
-        while(adjacent != null){
 
-            if(adjacent.occupied){
+        while (adjacent != null)
+        {
 
-                if(CanMerge(tile, adjacent.tile)){
-                    MergeTiles(tile,adjacent.tile);
+            if (adjacent.occupied)
+            {
+
+                if (CanMerge(tile, adjacent.tile))
+                {
+                    MergeTiles(tile, adjacent.tile);
                     return true;
                 }
                 break;
-                
+
             }
             newCell = adjacent;
-            adjacent = grid.GetAdjacentCell(adjacent,direction);
+            adjacent = grid.GetAdjacentCell(adjacent, direction);
 
         }
 
-        if(newCell!= null){
+        if (newCell != null)
+        {
             tile.MoveTo(newCell);
             return true;
         }
-        return false;  
+        return false;
     }
-    private bool SmashTile(Tile tile, Vector2Int direction){//Smashing a Tile means it will sweep cascading merges as it goes. IE: a row containing (2,1,1,0) pushed right, will merge to (0,0,0,4) instead of (0,0,2,2)
+    private bool SmashTile(Tile tile, Vector2Int direction)
+    {//Smashing a Tile means it will sweep cascading merges as it goes. IE: a row containing (2,1,1,0) pushed right, will merge to (0,0,0,4) instead of (0,0,2,2)
         TileCell newCell = null;
         TileCell adjacent = grid.GetAdjacentCell(tile.cell, direction);
-                            
-        while(adjacent != null){
 
-            if(adjacent.occupied){
+        while (adjacent != null)
+        {
 
-                if(CanSmash(tile, adjacent.tile)){
-                    MergeTiles(tile,adjacent.tile);
+            if (adjacent.occupied)
+            {
+
+                if (CanSmash(tile, adjacent.tile))
+                {
+                    MergeTiles(tile, adjacent.tile);
                     return true;
                 }
 
-                
+
             }
             newCell = adjacent;
-            adjacent = grid.GetAdjacentCell(adjacent,direction);
+            adjacent = grid.GetAdjacentCell(adjacent, direction);
 
         }
 
-        if(newCell!= null){
+        if (newCell != null)
+        {
             tile.MoveTo(newCell);
             return true;
         }
-        return false;  
+        return false;
     }
 
-    private bool CanMerge(Tile A, Tile B){
+    private bool CanMerge(Tile A, Tile B)
+    {
         return A.number == B.number && !B.locked;
     }
-    private bool CanSmash(Tile A, Tile B){
+    private bool CanSmash(Tile A, Tile B)
+    {
         return A.number == B.number;
     }
-    private void MergeTiles(Tile A, Tile B){ //Move Tile A into Tile B. Destroy Tile A and Promote Tile B
-        
+    private void MergeTiles(Tile A, Tile B)
+    { //Move Tile A into Tile B. Destroy Tile A and Promote Tile B
+
         tiles.Remove(A);
         A.MergeTo(B.cell);
         PromoteTile(B);
         B.locked = true;
     }
 
-    private void PromoteTile(Tile tile){
-        if(tile.number > 11){
-            tile.SetState(tileStates[11],tile.number+1);
+    public void ClearBoard()
+    {
+        foreach (var cell in grid.cells)
+        {
+            
+            Tile tmp = cell.tile;
+            if(tmp == null){continue;}
+            cell.tile = null;
+            tiles.Remove(tmp);
+            Destroy(tmp.gameObject);
         }
-        tile.SetState(tileStates[tile.number+1],tile.number+1);
     }
-    private IEnumerator WaitForChanges(){
+    private void PromoteTile(Tile tile)
+    {
+        if (tile.number > 11)
+        {
+            tile.SetState(tileStates[11], tile.number + 1);
+        }
+        tile.SetState(tileStates[tile.number + 1], tile.number + 1);
+    }
+    private IEnumerator WaitForChanges()
+    {
         waiting = true;
 
         yield return new WaitForSeconds(0.1f);
 
         waiting = false;
 
-        if(tiles.Count <= grid.size){
+        if (tiles.Count <= grid.size)
+        {
             CreateTile();
         }
-        foreach(var tile in tiles){
+        foreach (var tile in tiles)
+        {
             tile.locked = false;    //Unlock all tiles that merged in the previous move.
         }
-        
-        //TODO: create new Tiles and check board state
+
+        if (CheckForGameOver())
+        {
+            gameManager.GameOver();
+        }
+
+
     }
 
+    private bool CheckForGameOver()
+    {
+        if (tiles.Count != grid.size) { return false; } //saves us from check all tiles if the board isnt full
+
+        foreach (var tile in tiles)
+        {
+            TileCell up = grid.GetAdjacentCell(tile.cell, Vector2Int.up);
+            TileCell down = grid.GetAdjacentCell(tile.cell, Vector2Int.down);
+            TileCell left = grid.GetAdjacentCell(tile.cell, Vector2Int.left);
+            TileCell right = grid.GetAdjacentCell(tile.cell, Vector2Int.right);
+
+            if (up != null && CanMerge(tile, up.tile)) { return false; }
+            if (down != null && CanMerge(tile, down.tile)) { return false; }
+            if (left != null && CanMerge(tile, left.tile)) { return false; }
+            if (right != null && CanMerge(tile, right.tile)) { return false; }
+        }
+
+        return true; //Exhausted all moves for all cells.
+    }
 
 }
